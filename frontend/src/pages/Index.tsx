@@ -5,7 +5,7 @@ import MiniChart from "@/components/MiniChart";
 import ExperimentControls from "@/components/ExperimentControls";
 import { Link2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const errorOcclusionData = [
   { name: "0%", value: 32 },
@@ -34,6 +34,27 @@ const modelComparisonData = [
 
 const Dashboard = () => {
   const [synced, setSynced] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [fps, setFps] = useState(42.7);
+
+  // Update FPS in real-time during inference
+  useEffect(() => {
+    if (!running) {
+      setFps(42.7); // Reset to baseline when not running
+      return;
+    }
+
+    const fpsInterval = setInterval(() => {
+      // Simulate realistic FPS variation (40-45 fps range with small fluctuations)
+      const baseFps = 42;
+      const variation = Math.sin((Date.now() % 2000) / 1000) * 2; // Oscillate ±2 fps
+      const newFps = baseFps + variation;
+      setFps(Math.round(newFps * 10) / 10); // Round to 1 decimal place
+    }, 100);
+
+    return () => clearInterval(fpsInterval);
+  }, [running]);
 
   return (
     <DashboardLayout>
@@ -76,7 +97,7 @@ const Dashboard = () => {
           </div>
 
           {/* Experiment Controls */}
-          <ExperimentControls />
+          <ExperimentControls running={running} progress={progress} onRunning={setRunning} onProgress={setProgress} />
         </div>
 
         {/* Right metrics panel */}
@@ -86,7 +107,7 @@ const Dashboard = () => {
             <MetricCard label="MPJPE" value="42.3" unit="mm" tooltip="Mean Per Joint Position Error — average distance between predicted and ground truth joint positions" trend="down" accent />
             <MetricCard label="PA-MPJPE" value="38.1" unit="mm" tooltip="Procrustes-Aligned MPJPE — MPJPE after rigid alignment to ground truth" trend="down" />
             <MetricCard label="Avg Confidence" value="0.87" tooltip="Average joint detection confidence score across all joints" trend="up" />
-            <MetricCard label="FPS" value="42.7" unit="fps" tooltip="Frames per second during inference" />
+            <MetricCard label="FPS" value={fps.toString()} unit="fps" tooltip="Frames per second during inference" />
             <MetricCard label="Occlusion Level" value="25" unit="%" tooltip="Current simulated occlusion level applied to the input" />
           </div>
 

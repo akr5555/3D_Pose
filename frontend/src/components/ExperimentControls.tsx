@@ -5,19 +5,24 @@ import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
 
-const ExperimentControls = () => {
+interface ExperimentControlsProps {
+  running: boolean;
+  progress: number;
+  onRunning: (running: boolean) => void;
+  onProgress: (progress: number) => void;
+}
+
+const ExperimentControls = ({ running, progress, onRunning, onProgress }: ExperimentControlsProps) => {
   const [occlusion, setOcclusion] = useState([25]);
-  const [running, setRunning] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   const handleRun = () => {
-    setRunning(true);
-    setProgress(0);
+    onRunning(true);
+    onProgress(0);
     const interval = setInterval(() => {
-      setProgress((p) => {
+      onProgress((p) => {
         if (p >= 100) {
           clearInterval(interval);
-          setRunning(false);
+          onRunning(false);
           return 100;
         }
         return p + 2;
