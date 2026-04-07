@@ -50,7 +50,7 @@ const Dashboard = () => {
           </div>
 
           {/* Video panels */}
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col lg:flex-row gap-4">
             <VideoPanel title="Original Video" />
             <VideoPanel title="Pose Estimation Visualization" isPoseView />
           </div>

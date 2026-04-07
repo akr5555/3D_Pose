@@ -1,5 +1,5 @@
-import { Play, Pause, SkipBack, SkipForward, Maximize2, Box } from "lucide-react";
-import { useState, lazy, Suspense } from "react";
+import { Play, Pause, SkipBack, SkipForward, Maximize2, Minimize2, Box } from "lucide-react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 
@@ -17,9 +17,37 @@ const VideoPanel = ({ title, isPoseView }: VideoPanelProps) => {
   const [showBones, setShowBones] = useState(true);
   const [show3D, setShow3D] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
+
+  useEffect(() => {
+    if (!isMaximized) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMaximized(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isMaximized]);
 
   return (
-    <div className="glass-card overflow-hidden flex-1 min-w-0">
+    <>
+      {isMaximized && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/70"
+          onClick={() => setIsMaximized(false)}
+          aria-hidden="true"
+        />
+      )}
+      <div className={isMaximized ? "fixed inset-2 sm:inset-4 z-[80] flex flex-col bg-card border border-border rounded-xl overflow-hidden shadow-2xl" : "glass-card overflow-hidden flex-1 min-w-0"}>
       <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-border">
         <h3 className="text-xs sm:text-sm font-semibold text-foreground truncate">{title}</h3>
         <div className="flex items-center gap-1">
@@ -32,14 +60,19 @@ const VideoPanel = ({ title, isPoseView }: VideoPanelProps) => {
               <Box className="w-3.5 h-3.5" />
             </button>
           )}
-          <button className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors">
-            <Maximize2 className="w-3.5 h-3.5" />
+          <button
+            onClick={() => setIsMaximized((prev) => !prev)}
+            className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+            title={isMaximized ? "Exit Fullscreen" : "Maximize Panel"}
+            aria-label={isMaximized ? "Exit fullscreen" : "Maximize panel"}
+          >
+            {isMaximized ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
 
       {/* Video area */}
-      <div className="aspect-video bg-background/60 relative flex items-center justify-center">
+      <div className={`${isMaximized ? "flex-1 min-h-0" : "aspect-video"} bg-background/60 relative flex items-center justify-center`}>
         {isPoseView ? (
           show3D ? (
             <Suspense fallback={
@@ -84,7 +117,7 @@ const VideoPanel = ({ title, isPoseView }: VideoPanelProps) => {
       {/* Controls */}
       <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-border space-y-2 sm:space-y-3">
         <Slider value={frame} onValueChange={setFrame} max={300} step={1} className="w-full" />
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-1">
             <button className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
               <SkipBack className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -125,7 +158,8 @@ const VideoPanel = ({ title, isPoseView }: VideoPanelProps) => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
